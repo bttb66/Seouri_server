@@ -31,10 +31,15 @@ router.get('/category/:category/:location', async(req, res)=>{
       var connection = await pool.getConnection();
       let query1 = 'select * from villageEnterprise where category=? and location=?;';
       let posts = await connection.query(query1, [category, location]);
-      res.status(200).send({
-        "message":"Succeed in selecting a posts1" ,
-        "result" : posts
-      });
+
+      if(posts[0] == null){
+        res.status(401).send({"message":"카테코리별 마을기업이 존재하지 않습니다"});
+      }else{
+        res.status(200).send({
+          "message":"카테고리별 마을기업조회 성공" ,
+          "result" : posts
+        });
+      }
     }
   }catch(err){
     res.status(500).send({"message" : "server err " [err]});
@@ -54,10 +59,15 @@ router.get('/detail/:villageEnterpriseId', async(req, res)=>{
       var connection = await pool.getConnection();
       let query1 = 'select * from villageEnterprise where villageEnterpriseId=?;';
       let posts = await connection.query(query1, id);
-      res.status(200).send({
-        "message":"Succeed in selecting a posts2" ,
-        "result" : posts
-      });
+
+      if(posts[0] == null){
+        res.status(401).send({"message":"특정 마을기업이 존재하지 않습니다"});
+      }else{
+        res.status(200).send({
+          "message":"특정 마을기업조회 성공" ,
+          "result" : posts
+        });
+      }
     }
   }catch(err){
       res.status(500).send({"message" : "server err"});
@@ -78,10 +88,14 @@ router.get('/:name', async(req, res)=>{
       let query1 = 'select * from villageEnterprise where name=?;';
       let posts = await connection.query(query1, name);
 
-      res.status(200).send({
-        "message":"Succeed in selecting a posts3" ,
-        "result" : posts
-      });
+      if(posts[0] == null){
+        res.status(401).send({"message":"팝업내용이 존재하지 않습니다"});
+      }else{
+        res.status(200).send({
+          "message":"팝업 성공" ,
+          "result" : posts
+        });
+      }
     }
   }catch(err){
       res.status(500).send({"message" : "server err"});
