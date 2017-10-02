@@ -26,7 +26,6 @@ router.post('/', upload.array('images', 5), async(req, res)=>{
      if(!(req.body.title&&req.body.content&&req.body.userId&&req.body.location)){
        res.status(403).send({ message: 'please input all of title, content, userId.'});
      } else{
-
        var connection = await pool.getConnection();
 
        //post 테이블에 게시글 데이터 삽입
@@ -67,10 +66,10 @@ router.post('/', upload.array('images', 5), async(req, res)=>{
 
 // 게시글 조회
 // req(param) -> (location(서울시, 구별)...인코딩...)
-router.get('/total/:location', async(req, res) =>{
+router.get('/list/:location', async(req, res) =>{
   try{
     if(!req.params.location){
-      res.status(403).send({message: 'please input location.'});
+      res.status(403).send({"message": "please input location."});
     } else{
       var connection = await pool.getConnection();
       let query1 = 'select * from post where location=? order by postId desc';
@@ -95,7 +94,7 @@ router.get('/total/:location', async(req, res) =>{
 router.get('/:postId', async(req, res)=>{
   try{
     if(!req.params.postId){
-      res.status(403).send({ "message" : "please imput postId." });
+      res.status(403).send({ "message" : "please input postId." });
     } else{
       var connection = await pool.getConnection();
       let postId = req.params.postId;
@@ -108,9 +107,16 @@ router.get('/:postId', async(req, res)=>{
       let query2 = 'select * from post where postId=?';
       let post = await connection.query(query2, postId);
 
+      //특정 게시글 이미지 가져오기
+      let query3 = 'select image from image where postId=?';
+      let images = await connection.query(query3, postId);
+      if(images.length){
+        post[0].images = [];
+        for(var key in images) post[0].images.push(images[key].image);
+      }
       //댓글 정보 가져오기
-      let query3 = 'select * from comment where postId=?';
-      let comments = await connection.query(query3, postId);
+      let query4 = 'select * from comment where postId=?';
+      let comments = await connection.query(query4, postId);
 
       res.status(200).send({
         "message" : "Succeed in selecting post and comments.",
@@ -134,7 +140,7 @@ router.post('/comment', async(req, res)=>{
   try{
     console.log(req.body.postId);
     if(!(req.body.postId && req.body.userId && req.body.content)){
-      res.status(403).send({"message":"please input all of postId, userId, content."});
+      res.status(403).send({"message": "please input all of postId, userId, content."});
     } else{
       var connection = await pool.getConnection();
 
@@ -146,7 +152,7 @@ router.post('/comment', async(req, res)=>{
         "date" : moment().format('YY.MM.DD HH:mm')
       };
       await connection.query(query1, record);
-      res.status(200).send({"message":"Succeed in inserting comment."});
+      res.status(200).send({"message": "Succeed in inserting comment."});
     }
   } catch(err){
     console.log(err);
