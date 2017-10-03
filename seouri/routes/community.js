@@ -39,7 +39,8 @@ router.post('/', upload.array('images', 5), async(req, res)=>{
        };
 
        var postId = await connection.query(query1, record);
-       if(!req.files){
+       if(req.files){
+         console.log("images");
          let query2="insert into image (image, postId) values ?";
          let record2 = [];
          for(var key in req.files){
@@ -111,7 +112,7 @@ router.get('/:postId', async(req, res)=>{
       //특정 게시글 이미지 가져오기
       let query3 = 'select image from image where postId=?';
       let images = await connection.query(query3, postId);
-      if(images.length){
+      if(images.length){ //게시글에 이미지 존재할 경우
         post[0].images = [];
         for(var key in images) post[0].images.push(images[key].image);
       }
