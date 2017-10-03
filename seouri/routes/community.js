@@ -39,17 +39,18 @@ router.post('/', upload.array('images', 5), async(req, res)=>{
        };
 
        var postId = await connection.query(query1, record);
+       if(!req.files){
+         let query2="insert into image (image, postId) values ?";
+         let record2 = [];
+         for(var key in req.files){
+           if(req.files[key]){
+            record2.push([req.files[key].location, postId.insertId]);
+          }
+         }
 
-       let query2="insert into image (image, postId) values ?";
-       let record2 = [];
-       for(var key in req.files){
-         if(req.files[key]){
-          record2.push([req.files[key].location, postId.insertId]);
-        }
+         console.log(record2);
+         await connection.query(query2, [record2]);
        }
-
-       console.log(record2);
-       await connection.query(query2, [record2]);
 
        res.status(200).send({ "message" : "Succeed in inserting post." });
      }
@@ -57,7 +58,7 @@ router.post('/', upload.array('images', 5), async(req, res)=>{
   } catch(err){
     console.log(err);
     res.status(500).send({
-      "message": "syntax error : " [err]
+      "message": "syntax error"
     });
   } finally{
     pool.releaseConnection(connection);
@@ -82,7 +83,7 @@ router.get('/list/:location', async(req, res) =>{
   } catch (err){
     console.log(err);
     res.status(500).send({
-      "message": "syntax error : " [err]
+      "message": "syntax error"
     });
   } finally{
     pool.releaseConnection(connection);
@@ -127,7 +128,7 @@ router.get('/:postId', async(req, res)=>{
   }catch(err){
     console.log(err);
     res.status(500).send({
-      "message": "syntax error : " [err]
+      "message": "syntax error"
     });
   } finally{
     pool.releaseConnection(connection);
@@ -157,7 +158,7 @@ router.post('/comment', async(req, res)=>{
   } catch(err){
     console.log(err);
     res.status(500).send({
-      "message": "syntax error : " [err]
+      "message": "syntax error"
     });
   } finally{
     pool.releaseConnection(connection);
