@@ -18,31 +18,29 @@ const upload = multer({
   })
 });
 
-//카테고리별 마을기업 조회
-// req(param) -> (category(놀거리/ 먹거리/ 구경거리/ 체험거리) & location(구정보))
-router.get('/category/:category/:location', async(req, res)=>{
+
+//리스트별 마을기업 조회
+// req(param) ->  location(구정보)
+router.get('/list/:location', async(req, res)=>{
   try{
-      var category = req.params.category;
       var location = req.params.location;
-    if(!(category && location)){
-      res.status(403).send({message: 'please input category or location.'});
+    if(!location){
+      res.status(403).send({message: 'please input location.'});
     }
     else{
       var connection = await pool.getConnection();
-      let query1 = 'select * from villageEnterprise where category=? and location=?;';
-      let posts = await connection.query(query1, [category, location]);
+      let query1 = 'select villageEnterpriseId, name, photo, category from villageEnterprise where location=?;';
+      let list = await connection.query(query1, location);
 
-      if(posts[0] == null){
-        res.status(401).send({"message":"카테코리별 마을기업이 존재하지 않습니다"});
-      }else{
         res.status(200).send({
-          "message":"카테고리별 마을기업조회 성공" ,
-          "result" : posts
+          "message":"Succeed in selecting location" ,
+          "list" : list
         });
-      }
     }
   }catch(err){
-    res.status(500).send({"message" : "server err " [err]});
+    res.status(500).send({
+      "message": "syntax error"
+    });
   } finally{
     pool.releaseConnection(connection);
   }
@@ -58,19 +56,29 @@ router.get('/detail/:villageEnterpriseId', async(req, res)=>{
     } else{
       var connection = await pool.getConnection();
       let query1 = 'select * from villageEnterprise where villageEnterpriseId=?;';
-      let posts = await connection.query(query1, id);
+      let ve = await connection.query(query1, id);
 
-      if(posts[0] == null){
-        res.status(401).send({"message":"특정 마을기업이 존재하지 않습니다"});
-      }else{
+      if(ve.length){
+        //특정 게시글 이미지 가져오기
+        let query2 = 'select image from image where villageEnterpriseId=?;';
+        let images = await connection.query(query2, id);
+        if(images.length){ //게시글에 이미지 존재할 경우
+          ve[0].images = [];
+          for(var key in images) ve[0].images.push(images[key].image);
+        }
         res.status(200).send({
-          "message":"특정 마을기업조회 성공" ,
-          "result" : posts
+          "message":"Succeed in selecting Specific VillageEnterprise" ,
+          "Specific VillageEnterprise" : ve[0]
         });
+      }else{
+          res.status(401).send({"message":"Not exist Specific VillageEnterprise"});
       }
     }
   }catch(err){
-      res.status(500).send({"message" : "server err"});
+    console.log(err);
+    res.status(500).send({
+      "message": "syntax error"
+    });
   } finally{
     pool.releaseConnection(connection);
   }
@@ -84,21 +92,30 @@ router.get('/:name', async(req, res)=>{
     if(!name){
       res.status(403).send({message: 'please input name.'});
     } else{
-      var connection = await pool.getConnection();
-      let query1 = 'select * from villageEnterprise where name=?;';
-      let posts = await connection.query(query1, name);
+        var connection = await pool.getConnection();
+        let query1 = 'select * from villageEnterprise where name=?;';
+        let popup = await connection.query(query1, name);
 
-      if(posts[0] == null){
-        res.status(401).send({"message":"팝업내용이 존재하지 않습니다"});
-      }else{
-        res.status(200).send({
-          "message":"팝업 성공" ,
-          "result" : posts
-        });
+        if(popup.length){
+          //특정 게시글 이미지 가져오기
+          let query2 = 'select i.image from image i, villageEnterprise v where i.villageEnterpriseId=v.villageEnterpriseId and v.name=?;';
+          let images = await connection.query(query2, name);
+          if(images.length){ //게시글에 이미지 존재할 경우
+            popup[0].images = [];
+            for(var key in images) popup[0].images.push(images[key].image);
+          }
+          res.status(200).send({
+            "message":"Succeed in selecting popup" ,
+            "popup" : popup[0]
+          });
+        }else{
+            res.status(401).send({"message":"Not exist popup"});
+        }
       }
-    }
   }catch(err){
-      res.status(500).send({"message" : "server err"});
+    res.status(500).send({
+      "message": "syntax error"
+    });
   } finally{
     pool.releaseConnection(connection);
   }
