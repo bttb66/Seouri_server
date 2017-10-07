@@ -27,30 +27,34 @@ router.post('/', upload.array('images', 5), async(req, res)=>{
        res.status(403).send({ message: 'please input all of title, content, userId.'});
      } else{
        var connection = await pool.getConnection();
+       var userId = req.body.userId;
+       let query = 'select name from user where userId=?'
+       var name = await connection.query(query, userId);
 
        //post 테이블에 게시글 데이터 삽입
-       let query1='insert into post set ?';
+       let query2='insert into post set ?';
        let record = {
-         "userId" : req.body.userId,
+         "userId" : userId,
          "title" : req.body.title,
          "content" : req.body.content,
          "location" : req.body.location,
-         "date" : moment().format('YY.MM.DD HH:mm')
+         "date" : moment().format('YY.MM.DD HH:mm'),
+         "name" : name[0].name
        };
 
-       var postId = await connection.query(query1, record);
+       var postId = await connection.query(query2, record);
        if(req.files){
          console.log("images");
-         let query2="insert into image (image, postId) values ?";
-         let record2 = [];
+         let query3="insert into image (image, postId) values ?";
+         let record3 = [];
          for(var key in req.files){
            if(req.files[key]){
             record2.push([req.files[key].location, postId.insertId]);
           }
          }
 
-         console.log(record2);
-         await connection.query(query2, [record2]);
+         console.log(record3);
+         await connection.query(query3, [record3]);
        }
 
        res.status(200).send({ "message" : "Succeed in inserting post." });
@@ -116,6 +120,7 @@ router.get('/:postId', async(req, res)=>{
         post[0].images = [];
         for(var key in images) post[0].images.push(images[key].image);
       }
+
       //댓글 정보 가져오기
       let query4 = 'select * from comment where postId=?';
       let comments = await connection.query(query4, postId);
@@ -123,6 +128,7 @@ router.get('/:postId', async(req, res)=>{
       res.status(200).send({
         "message" : "Succeed in selecting post and comments.",
         "post" : post[0],
+        "images" : images,
         "comments" : comments
       });
     }
@@ -145,15 +151,19 @@ router.post('/comment', async(req, res)=>{
       res.status(403).send({"message": "please input all of postId, userId, content."});
     } else{
       var connection = await pool.getConnection();
+      var userId = req.body.userId;
+      let query1 = 'select name from user where userId=?';
+      var name = await connection.query(query1, userId);
 
-      let query1 = 'insert into comment set ?';
-      let record = {
+      let query2 = 'insert into comment set ?';
+      let record2 = {
         "postId" : req.body.postId,
         "userId" : req.body.userId,
         "content" : req.body.content,
-        "date" : moment().format('YY.MM.DD HH:mm')
+        "date" : moment().format('YY.MM.DD HH:mm'),
+        "name" : name[0].name
       };
-      await connection.query(query1, record);
+      await connection.query(query2, record2);
       res.status(200).send({"message": "Succeed in inserting comment."});
     }
   } catch(err){
