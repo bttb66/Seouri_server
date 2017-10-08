@@ -31,6 +31,7 @@ router.post('/', upload.array('images', 5), async(req, res)=>{
        let query = 'select name, profile from user where userId=?'
        var userInfo = await connection.query(query, userId);
 
+       console.log(1111111);
        //post 테이블에 게시글 데이터 삽입
        let query2='insert into post set ?';
        let record = {
@@ -44,13 +45,13 @@ router.post('/', upload.array('images', 5), async(req, res)=>{
        };
 
        var postId = await connection.query(query2, record);
-       if(req.files){
+       if(req.files.length){
          console.log("images");
          let query3="insert into image (image, postId) values ?";
          let record3 = [];
          for(var key in req.files){
            if(req.files[key]){
-            record2.push([req.files[key].location, postId.insertId]);
+            record3.push([req.files[key].location, postId.insertId]);
           }
          }
 
