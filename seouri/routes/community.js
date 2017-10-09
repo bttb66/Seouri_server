@@ -173,4 +173,30 @@ router.post('/comment', async(req, res)=>{
   }
 });
 
+//게시판 검색
+router.post('/search', async(req, res)=>{
+  try{
+    if(!req.body.key){
+      res.status(403).send({"message": "please input key."});
+    } else{
+      var key = req.body.key;
+      var connection = await pool.getConnection();
+      let query = "select * from post where title like '%"+key+"%' or content like '%"+key+"%'";
+      console.log(query);
+      var result = await connection.query(query);
+      res.status(200).send({
+        "message" : "Succeed in search",
+        "searchRet" : result
+      });
+    }
+  } catch(err){
+    console.log(err);
+    res.status(500).send({
+      "message": "syntax error"
+    });
+  }finally{
+    pool.releaseConnection();
+  }
+});
+
 module.exports = router;
