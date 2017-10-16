@@ -17,6 +17,7 @@ const upload = multer({
 });
 
 //회원가입 (카카오톡 토큰(id 로 사용), 회원정보 받기) (name, userId, profile)
+//회원가입 (카카오톡 토큰(id 로 사용), 회원정보 받기) (name, userId, profile)
 router.post('/', async(req, res) => {
   try{
     if(!(req.body.name && req.body.userId)){
@@ -24,17 +25,26 @@ router.post('/', async(req, res) => {
     }else{
 
       var connection = await pool.getConnection();
-      let query = 'insert into user set ?';
-      let record = {
-        "userId" : req.body.userId,
-        "name" : req.body.name,
-        "profile" : req.body.profile
-      };
 
-      await connection.query(query, record);
-      res.status(200).send({
-        "message" : "Succeed in inserting memberInfo."
-      });
+      let query0 = 'select * from user where userId=?';
+      let user = await connection.query(query0, req.body.userId);
+      if(!user.length){
+        res.status(200).send({
+          "message" : "already has id"
+        });
+      } else{
+        let query = 'insert into user set ?';
+        let record = {
+          "userId" : req.body.userId,
+          "name" : req.body.name,
+          "profile" : req.body.profile
+        };
+
+        await connection.query(query, record);
+        res.status(200).send({
+          "message" : "Succeed in inserting memberInfo."
+        });
+      }
     }
   }catch(err){
     console.log("server err : " + err);
