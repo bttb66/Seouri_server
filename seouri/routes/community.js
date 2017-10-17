@@ -80,7 +80,7 @@ router.get('/list/:location', async(req, res) =>{
       res.status(403).send({"message": "please input location."});
     } else{
       var connection = await pool.getConnection();
-      let query1 = 'select * from post where location=? order by postId desc';
+      let query1 = 'select postId, title, view_num, date, name, profile from post where location=? order by postId desc';
       let posts = await connection.query(query1, req.params.location);
       res.status(200).send({
         "message" : "Succeed in selecting posts" ,
@@ -111,9 +111,9 @@ router.get('/:postId', async(req, res)=>{
       let query1 = 'update post set view_num = view_num + 1 where postId=?';
       await connection.query(query1, postId);
 
-      // //특정 게시글 정보 가져오기
-      // let query2 = 'select * from post where postId=?';
-      // let post = await connection.query(query2, postId);
+      //특정 게시글 정보 가져오기
+      let query2 = 'select content from post where postId=?';
+      let post = await connection.query(query2, postId);
 
       //특정 게시글 이미지 가져오기
       let query2 = 'select image from image where postId=?';
@@ -125,6 +125,7 @@ router.get('/:postId', async(req, res)=>{
 
       res.status(200).send({
         "message" : "Succeed in selecting post and comments.",
+        "post" : post,
         "images" : images,
         "comments" : comments
       });
