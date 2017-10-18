@@ -15,8 +15,9 @@ const upload = multer({
     }
   })
 });
+const jwt = require('jsonwebtoken');
 
-//회원가입 (카카오톡 토큰(id 로 사용), 회원정보 받기) (name, userId, profile)
+//회원가입 (카카오톡 토큰, 이메일(id 로 사용), 회원정보, deviceToken 받기) (name, userId, profile)
 router.post('/', async(req, res) => {
   try{
     if(!(req.body.name && req.body.userId)){
@@ -27,7 +28,8 @@ router.post('/', async(req, res) => {
 
       let query0 = 'select * from user where userId=?';
       let user = await connection.query(query0, req.body.userId);
-      if(!user.length){
+      if(user.length){
+        console.log(user);
         res.status(200).send({
           "message" : "already has id"
         });
@@ -36,12 +38,23 @@ router.post('/', async(req, res) => {
         let record = {
           "userId" : req.body.userId,
           "name" : req.body.name,
-          "profile" : req.body.profile
+          "profile" : req.body.profile,
+          "kakaoToken" : req.body.kakaoToken,
+          "deviceToken" : req.body.deviceToken
         };
-
+        let option = {
+          algorithm : 'HS256',
+          expiresIn: 60 * 60 * 24 * 30 //토큰 발행 후 유효기간 지정(30일)
+        }
+        let payload = {
+          userId: req.body.userId
+        };
+        let token = jwt.sign(payload, req.app.get('jwt-secret'), option);
+        console.log('token : \n' + token);
         await connection.query(query, record);
         res.status(200).send({
-          "message" : "Succeed in inserting memberInfo."
+          "message" : "Succeed in inserting memberInfo.",
+          "token" : token
         });
       }
     }
@@ -57,16 +70,29 @@ router.post('/', async(req, res) => {
 router.post('/login', async(req, res) =>{
   try{
     if(!req.body.userId){
-      res.status(403).send({ message: 'please input userId(token).'});
+      res.status(403).send({ message: 'please input userId, kakaoToken.'});
     }else{
+
       var connection = await pool.getConnection();
-      let query = 'select * from user where userId=?';
-      var userInfo = await connection.query(query, req.body.userId);
+
+      let query = 'select userId, name, profile from user where userId=? and kakaoToken=?';
+      var userInfo = await connection.query(query, [req.body.userId, req.body.kakaoToken]);
+
       if(!userInfo.length){
         res.status(401).send({ "message" : "userId(token) authorization err"});
       } else{
+        let option = {
+          algorithm : 'HS256',
+          expiresIn: 60 * 60 * 24 * 30 //토큰 발행 후 유효기간 지정(30일)
+        }
+        let payload = {
+          userId: userInfo[0].userId
+        };
+        let token = jwt.sign(payload, req.app.get('jwt-secret'), option);
+        console.log('token : \n' + token);
         res.status(200).send({
           "message" : "Succeed into userId authorization",
+          "token" : token,
           "userInfo" : userInfo[0]
         });
       }
