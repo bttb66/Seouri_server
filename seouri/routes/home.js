@@ -17,42 +17,61 @@ const upload = multer({
   })
 });
 
-router.get('/', async function (req, res) {
+router.post('/', async function (req, res) {
     try {
-        var connection = await pool.getConnection();
-       //포스터
-       let poster = 'select image from image where imageId=6;';
-       let poster1= await connection.query(poster);
-       //이주의 마을기업
-        let query = 'select vill.villageEnterpriseId,name,image from villageEnterprise vill,image where image.villageEnterpriseId=1 and vill.villageEnterpriseId=1;';
-       let query2 = 'select vill.villageEnterpriseId,name,image from villageEnterprise vill,image where image.villageEnterpriseId=2 and vill.villageEnterpriseId=2;';
-      let villageweek1= await connection.query(query);
-      let villageweek2= await connection.query(query2);
-      let viilageweek=[
-        villageweek1[0],
-        villageweek2[0]
-      ];
-      //알림마당
-      let query3 = 'select * from villageInformation;';
-      let villageinformation= await connection.query(query3);
-      //구인정보
-      let query4 = 'select * from jobInformation;';
-      let jobinformation= await connection.query(query4);
+      if(!(req.body.userLat && req.body.userLng)){
+        res.status(403).send({ message: 'please input userLat, userLng.'});
+      } else{
+          var connection = await pool.getConnection();
+         //포스터
+         let poster = 'select image from image where imageId=6;';
+         let poster1= await connection.query(poster);
+         //이주의 마을기업
+          let query = 'select vill.villageEnterpriseId,name,image from villageEnterprise vill,image where image.villageEnterpriseId=1 and vill.villageEnterpriseId=1;';
+          let query2 = 'select vill.villageEnterpriseId,name,image from villageEnterprise vill,image where image.villageEnterpriseId=2 and vill.villageEnterpriseId=2;';
+          let villageweek1= await connection.query(query);
+          let villageweek2= await connection.query(query2);
+          let viilageweek=[
+            villageweek1[0],
+            villageweek2[0]
+          ];
+          //알림마당
+          let query3 = 'select * from villageInformation;';
+          let villageinformation= await connection.query(query3);
+          //구인정보
+          let query4 = 'select * from jobInformation;';
+          let jobinformation= await connection.query(query4);
 
-      res.status(200).send({
-        "message" : "Succeed in home",
-        "poster" : poster1[0],
-        "weekvillageEnterprise" : viilageweek,
-        "villageinformation" : villageinformation,
-        "jobinformation" : jobinformation
-      });
- }
-  catch (err) {
-    res.status(500).send({ message: 'selecting village error' + err });
-}
-finally {
-    pool.releaseConnection(connection);
-}
+          let query5 = ''+
+        'SELECT *, '+
+         '(6371*acos(cos(radians(?))*cos(radians(lat))*cos(radians(lng)'+
+         '-radians(?))+sin(radians(?))*sin(radians(lat))))'+
+         'AS distance'+
+        ' FROM villageEnterprise'+
+        ' ORDER BY distance'+
+        ' Limit 1;';
+        var userLat = req.body.userLat;
+        var userLng = req.body.userLng;
+        console.log('userLat' + userLat);
+        console.log('userLng' + userLng);
+        var distanceRec = await connection.query(query5, [userLat, userLng, userLat]);
+        //lat : 위도, lng : 경도
+        res.status(200).send({
+          "message" : "Succeed in home",
+          "poster" : poster1[0],
+          "weekvillageEnterprise" : viilageweek,
+          "villageinformation" : villageinformation,
+          "jobinformation" : jobinformation,
+          "distanceRec" : distanceRec[0]
+        });
+      }
+   }
+    catch (err) {
+      res.status(500).send({ "message": "selecting village error"});
+  }
+  finally {
+      pool.releaseConnection(connection);
+  }
 });
 
 module.exports = router;
