@@ -30,8 +30,10 @@ app.use( function(req, res, next){
 
   let url = req.url;
   let ret = url.match('/member');
+  let ret2 = url.match('/member/mypage');
+
   console.log('app.js req 확인: ', ret);
-  if(ret){
+  if(ret && !ret2){
     console.log('넘어감');
     next();
   } else{

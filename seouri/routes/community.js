@@ -107,6 +107,9 @@ router.get('/:postId', async(req, res)=>{
       var connection = await pool.getConnection();
       let postId = req.params.postId;
 
+      console.log('post,,,userId : '+ req.userId);
+      let query0 = 'select postId from post where postId=? and userId=?';
+      let my = await connection.query(query0, [postId, req.userId]);
       //조회수 +1
       let query1 = 'update post set view_num = view_num + 1 where postId=?';
       await connection.query(query1, postId);
@@ -116,18 +119,19 @@ router.get('/:postId', async(req, res)=>{
       let post = await connection.query(query2, postId);
 
       //특정 게시글 이미지 가져오기
-      let query2 = 'select image from image where postId=?';
-      let images = await connection.query(query2, postId);
+      let query3 = 'select image from image where postId=?';
+      let images = await connection.query(query3, postId);
 
       //댓글 정보 가져오기
-      let query3 = 'select * from comment where postId=?';
-      let comments = await connection.query(query3, postId);
+      let query4 = 'select * from comment where postId=?';
+      let comments = await connection.query(query4, postId);
 
       res.status(200).send({
         "message" : "Succeed in selecting post and comments.",
         "post" : post,
         "images" : images,
-        "comments" : comments
+        "comments" : comments,
+        "my" : my.length
       });
     }
   }catch(err){
@@ -139,6 +143,7 @@ router.get('/:postId', async(req, res)=>{
     pool.releaseConnection(connection);
   }
 });
+
 
 //댓글 작성
 //req -> (userId, content, postId)
