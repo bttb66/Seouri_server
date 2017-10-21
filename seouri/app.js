@@ -11,12 +11,13 @@ var community = require('./routes/community');
 var member = require('./routes/member');
 var home = require('./routes/home');
 
+var config = require('./config/secretKey');
 var app = express();
-
+var jwt = require('jsonwebtoken');
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
-
+app.set('jwt-secret', config.secret);var jwt = require('jsonwebtoken');
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(logger('dev'));

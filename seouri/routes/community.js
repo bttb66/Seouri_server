@@ -200,4 +200,53 @@ router.post('/search', async(req, res)=>{
   }
 });
 
+router.put('/', async(req, res)=>{
+  try{
+     if(!(req.body.postId&&req.body.title&&req.body.content)){
+       res.status(403).send({ message: 'please input all of postId, title, content.'});
+     } else{
+       var connection = await pool.getConnection();
+
+       console.log(1111111);
+       //post 테이블에 게시글 데이터 삽입
+       let query1='update post set ? where postId=?';
+       let record = {
+         "title" : req.body.title,
+         "content" : req.body.content,
+         "date" : moment().format('YY.MM.DD HH:mm'),
+       };
+
+       await connection.query(query1, [record, req.body.postId]);
+       res.status(200).send({ "message" : "Succeed in updating post." });
+     }
+  } catch(err){
+    console.log(err);
+    res.status(500).send({
+      "message": "syntax error"
+    });
+  } finally{
+    pool.releaseConnection(connection);
+  }
+})
+
+router.delete('/:postId', async(req, res)=>{
+  try{
+    if(!req.params.postId){
+      res.status(403).send({"message": "please input postId."});
+    } else{
+      var connection = await pool.getConnection();
+      let query = 'delete from post where postId=?';
+      await connection.query(query, req.params.postId);
+
+      res.status(200).send({"message" : "delete post Succeed"});
+    }
+  } catch(err){
+    console.log(err);
+    res.status(500).send({
+      "message": "syntax error"
+    });
+  }finally{
+    pool.releaseConnection();
+  }
+});
 module.exports = router;
