@@ -18,6 +18,26 @@ const upload = multer({
   })
 });
 
+//전체마을기업조회
+router.get('/total', async(req, res)=>{
+  try{
+      var connection = await pool.getConnection();
+      let query1 = 'select villageEnterpriseId, name, location from villageEnterprise;';
+      let TotalVeList = await connection.query(query1);
+
+        res.status(200).send({
+          "message":"Succeed in selecting total villageEnterprise" ,
+          "TotalVelist" : TotalVeList
+        });
+  }catch(err){
+    res.status(500).send({
+      "message": "syntax error"
+    });
+  } finally{
+    pool.releaseConnection(connection);
+  }
+});
+
 
 //리스트별 마을기업 조회
 // req(param) ->  location(구정보)
@@ -29,13 +49,24 @@ router.get('/list/:location', async(req, res)=>{
     }
     else{
       var connection = await pool.getConnection();
-      let query1 = 'select villageEnterpriseId, name, photo, category from villageEnterprise where location=?;';
-      let list = await connection.query(query1, location);
+      if(location == 25){
+        let query1 = 'select villageEnterpriseId, name, photo, category from villageEnterprise;';
+        let TotalList = await connection.query(query1, location);
 
-        res.status(200).send({
-          "message":"Succeed in selecting location" ,
-          "list" : list
-        });
+          res.status(200).send({
+            "message":"Succeed in selecting total location" ,
+            "list" : TotalList
+          });
+      }
+      else{
+        let query2 = 'select villageEnterpriseId, name, photo, category from villageEnterprise where location=?;';
+        let list = await connection.query(query2, location);
+
+          res.status(200).send({
+            "message":"Succeed in selecting location" ,
+            "list" : list
+          });
+      }
     }
   }catch(err){
     res.status(500).send({
@@ -58,17 +89,43 @@ router.get('/detail/:villageEnterpriseId', async(req, res)=>{
       let query1 = 'select * from villageEnterprise where villageEnterpriseId=?;';
       let ve = await connection.query(query1, id);
 
+      var title = [], url = [];
+
+      if(ve[0].article){
+        if(ve[0].article.length){
+          ve[0].article = ve[0].article.split('\n');
+
+          for(var i in ve[0].article){
+            if(ve[0].article[i].indexOf("http://") != -1){
+              url.push(ve[0].article[i]);
+            }
+            else{
+                title.push(ve[0].article[i]);
+            }
+          }
+
+          ve[0].article = [];
+          for(var j = 0; j < title.length; j++){
+            var subArticle = {
+              "title": title[j],
+              "url": url[j]
+            };
+            ve[0].article.push(subArticle);
+          }
+        }
+      }
+
+
       if(ve.length){
         //특정 게시글 이미지 가져오기
-        let query2 = 'select image from image where villageEnterpriseId=?;';
-        let images = await connection.query(query2, id);
+        let query3 = 'select image from image where villageEnterpriseId=?;';
+        let images = await connection.query(query3, id);
         if(images.length){ //게시글에 이미지 존재할 경우
-          ve[0].images = [];
-          for(var key in images) ve[0].images.push(images[key].image);
+          ve[0].images = images;
         }
         res.status(200).send({
           "message":"Succeed in selecting Specific VillageEnterprise" ,
-          "Specific VillageEnterprise" : ve[0]
+          "specificVe" : ve[0]
         });
       }else{
           res.status(401).send({"message":"Not exist Specific VillageEnterprise"});
@@ -98,11 +155,10 @@ router.get('/:name', async(req, res)=>{
 
         if(popup.length){
           //특정 게시글 이미지 가져오기
-          let query2 = 'select i.image from image i, villageEnterprise v where i.villageEnterpriseId=v.villageEnterpriseId and v.name=?;';
-          let images = await connection.query(query2, name);
+          let query2 = 'select image from image where villageEnterpriseId=?;';
+          let images = await connection.query(query2, popup[0].villageEnterpriseId);
           if(images.length){ //게시글에 이미지 존재할 경우
-            popup[0].images = [];
-            for(var key in images) popup[0].images.push(images[key].image);
+            popup[0].images = images;
           }
           res.status(200).send({
             "message":"Succeed in selecting popup" ,
