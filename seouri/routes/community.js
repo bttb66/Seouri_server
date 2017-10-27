@@ -162,7 +162,7 @@ router.post('/comment', async(req, res)=>{
     } else{
       var connection = await pool.getConnection();
       var userId = req.body.userId;
-      let query1 = 'select name from user where userId=?';
+      let query1 = 'select name, deviceToken from user where userId=?';
       var name = await connection.query(query1, userId);
 
       let query2 = 'insert into comment set ?';
@@ -174,6 +174,88 @@ router.post('/comment', async(req, res)=>{
         "name" : name[0].name
       };
       await connection.query(query2, record2);
+
+      let query3 = 'select deviceToken from user u, post p where u.userId = p.userId and p.postId=?';
+      let deviceToken = await connection.query(query3, req.body.postId);
+      console.log(deviceToken);
+        //알람부르기 & 메세지전송 & 저장
+        var message = {
+            to: deviceToken[0].deviceToken , // required fill with device token or topics
+            notification: {
+                title: '서우리',
+                body: req.body.userName+'님이 작성하신 게시글에 댓글을 달았습니다.'
+            }
+        };
+        console.log(serverKey);
+        fcm.send(message)
+          .then(function(response){
+              console.log(message);
+              console.log("Successfully sent with response: ", response);
+          })
+          .catch(function(err){
+              console.log("Something has gone wrong!");
+              console.error(err);
+          });
+      res.status(200).send({"message": "Succeed in inserting comment."});
+    }
+  } catch(err){
+    console.log(err);
+    res.status(500).send({
+      "message": "syntax error"
+    });
+  } finally{
+    pool.releaseConnection(connection);
+  }
+});
+
+
+//ios 댓글 작성
+//req -> (userId, content, postId)
+router.post('/comment', async(req, res)=>{
+  try{
+    console.log(req.body.postId);
+    if(!(req.body.postId && req.body.userId && req.body.content)){
+      res.status(403).send({"message": "please input all of postId, userId, content."});
+    } else{
+      var connection = await pool.getConnection();
+      var userId = req.body.userId;
+      let query1 = 'select name, deviceToken from user where userId=?';
+      var name = await connection.query(query1, userId);
+
+      let query2 = 'insert into comment set ?';
+      let record2 = {
+        "postId" : req.body.postId,
+        "userId" : req.body.userId,
+        "content" : req.body.content,
+        "date" : moment().format('YY.MM.DD HH:mm'),
+        "name" : name[0].name
+      };
+      await connection.query(query2, record2);
+
+      let query3 = 'select deviceToken from user u, post p where u.userId = p.userId and p.postId=?';
+      let deviceToken = await connection.query(query3, req.body.postId);
+      console.log(deviceToken);
+        //알람부르기 & 메세지전송 & 저장
+        var message = {
+            to: deviceToken[0].deviceToken , // required fill with device token or topics
+            data: {
+              content_available : true
+            },
+            notification: {
+                title: '서우리',
+                body: req.body.userName+'님이 작성하신 게시글에 댓글을 달았습니다.'
+            }
+        };
+        console.log(serverKey);
+        fcm.send(message)
+          .then(function(response){
+              console.log(message);
+              console.log("Successfully sent with response: ", response);
+          })
+          .catch(function(err){
+              console.log("Something has gone wrong!");
+              console.error(err);
+          });
       res.status(200).send({"message": "Succeed in inserting comment."});
     }
   } catch(err){
