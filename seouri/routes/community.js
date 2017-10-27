@@ -45,7 +45,7 @@ router.post('/', upload.array('images', 5), async(req, res)=>{
        };
 
        var postId = await connection.query(query2, record);
-       if(req.files.length){
+       if(req.files){
          console.log("images");
          let query3="insert into image (image, postId) values ?";
          let record3 = [];

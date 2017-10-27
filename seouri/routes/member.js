@@ -39,7 +39,6 @@ router.post('/', async(req, res) => {
           "userId" : req.body.userId,
           "name" : req.body.name,
           "profile" : req.body.profile,
-          "kakaoToken" : req.body.kakaoToken,
           "deviceToken" : req.body.deviceToken
         };
         let option = {
@@ -75,8 +74,8 @@ router.post('/login', async(req, res) =>{
 
       var connection = await pool.getConnection();
 
-      let query = 'select userId, name, profile from user where userId=? and kakaoToken=?';
-      var userInfo = await connection.query(query, [req.body.userId, req.body.kakaoToken]);
+      let query = 'select userId, name, profile from user where userId=?';
+      var userInfo = await connection.query(query, req.body.userId);
 
       if(!userInfo.length){
         res.status(401).send({ "message" : "userId(token) authorization err"});
