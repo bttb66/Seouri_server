@@ -80,7 +80,14 @@ router.get('/list/:location', async(req, res) =>{
       res.status(403).send({"message": "please input location."});
     } else{
       var connection = await pool.getConnection();
-      let query1 = 'select postId, title, view_num, date, name, profile from post where location=? order by postId desc';
+      var location = req.params.location;
+      let query1 = '';
+      if(location == 25){
+        query1 = 'select postId, title, view_num, date, name, profile from post order by postId desc';
+
+      }else{
+       query1 = 'select postId, title, view_num, date, name, profile from post where location=? order by postId desc';
+      }
       let posts = await connection.query(query1, req.params.location);
       res.status(200).send({
         "message" : "Succeed in selecting posts" ,
@@ -201,7 +208,7 @@ router.post('/search', async(req, res)=>{
       "message": "syntax error"
     });
   }finally{
-    pool.releaseConnection();
+    pool.releaseConnection(connection);
   }
 });
 
@@ -251,7 +258,7 @@ router.delete('/:postId', async(req, res)=>{
       "message": "syntax error"
     });
   }finally{
-    pool.releaseConnection();
+    pool.releaseConnection(connection);
   }
 });
 module.exports = router;

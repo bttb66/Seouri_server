@@ -123,7 +123,7 @@ router.post('/mypage', async(req, res) =>{
     console.log("server err : " + err);
     res.status(500).send({ "message" : "syntax error" });
   } finally{
-    pool.releaseConnection();
+    pool.releaseConnection(connection);
   }
 });
 
