@@ -18,6 +18,33 @@ const upload = multer({
   })
 });
 
+//키워드 검색
+//req(param) -> (name)
+router.post('/search', async(req, res)=>{
+    try{
+      var name = req.body.name;
+      if(!name){
+        res.status(403).send({message: 'please input name.'});
+      } else{
+          var connection = await pool.getConnection();
+          let query1 = 'select name from villageEnterprise where name like"%' + name + '%";';
+          let KeywordList = await connection.query(query1, name);
+  
+          res.status(200).send({
+            "message":"Succeed in selecting keywordList" ,
+            "KeywordList" : KeywordList
+          });
+        }
+    }catch(err){
+      res.status(500).send({
+        "message": "syntax error"
+      });
+    } finally{
+      pool.releaseConnection(connection);
+    }
+  });
+
+
 //전체마을기업조회
 router.get('/total', async(req, res)=>{
   try{
