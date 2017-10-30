@@ -27,9 +27,9 @@ router.post('/search', async(req, res)=>{
         res.status(403).send({message: 'please input name.'});
       } else{
           var connection = await pool.getConnection();
-          let query1 = 'select name from villageEnterprise where name like"%' + name + '%";';
+          let query1 = 'select name, villageEnterpriseId, photo, category from villageEnterprise where name like"%' + name + '%";';
           let KeywordList = await connection.query(query1, name);
-  
+
           res.status(200).send({
             "message":"Succeed in selecting keywordList" ,
             "KeywordList" : KeywordList
