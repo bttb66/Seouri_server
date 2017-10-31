@@ -17,7 +17,9 @@ const upload = multer({
     }
   })
 });
-
+const FCM = require('fcm-push');
+const serverKey = require('../config/serverKey').serverKey;
+var fcm = new FCM(serverKey);
 
 //게시글 작성
 //req -> (userId, title, content, images(최대5개 배열로), location)
@@ -45,7 +47,7 @@ router.post('/', upload.array('images', 5), async(req, res)=>{
        };
 
        var postId = await connection.query(query2, record);
-       if(req.files){
+       if(!(!req.files)){
          console.log("images");
          let query3="insert into image (image, postId) values ?";
          let record3 = [];
