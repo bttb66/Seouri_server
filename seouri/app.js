@@ -10,8 +10,10 @@ var users = require('./routes/users');
 var community = require('./routes/community');
 var member = require('./routes/member');
 var home = require('./routes/home');
-
+var villageEnterprise = require('./routes/villageEnterprise');
+var question = require('./routes/question');
 var config = require('./config/secretKey');
+var job = require('./routes/job');
 var app = express();
 var jwt = require('jsonwebtoken');
 // view engine setup
@@ -61,6 +63,9 @@ app.use('/users', users);
 app.use('/community', community);
 app.use('/member', member);
 app.use('/home',home);
+app.use('/villageEnterprise', villageEnterprise);
+app.use('/question', question);
+app.use('/job', job);
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   var err = new Error('Not Found');

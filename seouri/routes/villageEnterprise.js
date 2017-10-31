@@ -2,7 +2,7 @@ const express = require('express');
 const aws = require('aws-sdk');
 const router = express.Router();
 const pool = require('../config/db_pool.js');
-aws.config.loadFromPath('./config/aws_config.json');
+//aws.config.loadFromPath('./config/aws_config.json');
 const s3 = new aws.S3();
 const moment = require('moment');
 const multer = require('multer');
@@ -17,33 +17,6 @@ const upload = multer({
     }
   })
 });
-
-//키워드 검색
-//req(param) -> (name)
-router.post('/search', async(req, res)=>{
-    try{
-      var name = req.body.name;
-      if(!name){
-        res.status(403).send({message: 'please input name.'});
-      } else{
-          var connection = await pool.getConnection();
-          let query1 = 'select name, villageEnterpriseId, photo, category from villageEnterprise where name like"%' + name + '%";';
-          let KeywordList = await connection.query(query1, name);
-
-          res.status(200).send({
-            "message":"Succeed in selecting keywordList" ,
-            "KeywordList" : KeywordList
-          });
-        }
-    }catch(err){
-      res.status(500).send({
-        "message": "syntax error"
-      });
-    } finally{
-      pool.releaseConnection(connection);
-    }
-  });
-
 
 //전체마을기업조회
 router.get('/total', async(req, res)=>{
@@ -64,7 +37,6 @@ router.get('/total', async(req, res)=>{
     pool.releaseConnection(connection);
   }
 });
-
 
 //리스트별 마을기업 조회
 // req(param) ->  location(구정보)
@@ -103,7 +75,6 @@ router.get('/list/:location', async(req, res)=>{
     pool.releaseConnection(connection);
   }
 });
-
 //특정 마을기업 조회
 //req(param) -> (villageEnterpriseId)
 router.get('/detail/:villageEnterpriseId', async(req, res)=>{
@@ -167,6 +138,43 @@ router.get('/detail/:villageEnterpriseId', async(req, res)=>{
     pool.releaseConnection(connection);
   }
 });
+/*
+//특정 마을기업 조회
+//req(param) -> (villageEnterpriseId)
+router.get('/detail/:villageEnterpriseId', async(req, res)=>{
+  try{
+    var id = req.params.villageEnterpriseId;
+    if(!id){
+      res.status(403).send({message: 'please input villageEnterpriseId.'});
+    } else{
+      var connection = await pool.getConnection();
+      let query1 = 'select * from villageEnterprise where villageEnterpriseId=?;';
+      let ve = await connection.query(query1, id);
+
+      if(ve.length){
+        //특정 게시글 이미지 가져오기
+        let query2 = 'select image from image where villageEnterpriseId=?;';
+        let images = await connection.query(query2, id);
+        if(images.length){ //게시글에 이미지 존재할 경우
+          ve[0].images = images;
+        }
+        res.status(200).send({
+          "message":"Succeed in selecting Specific VillageEnterprise" ,
+          "specificVe" : ve[0]
+        });
+      }else{
+          res.status(401).send({"message":"Not exist Specific VillageEnterprise"});
+      }
+    }
+  }catch(err){
+    console.log(err);
+    res.status(500).send({
+      "message": "syntax error"
+    });
+  } finally{
+    pool.releaseConnection(connection);
+  }
+});*/
 
 //검색시 한번에 연결되는 팝업
 //req(param) -> (name)
@@ -204,4 +212,30 @@ router.get('/:name', async(req, res)=>{
   }
 });
 
+//키워드검색
+router.post('/search', async(req, res)=>{
+    try{
+      var name = req.body.name;
+      if(!name){
+        res.status(403).send({message: 'please input name.'});
+      } else{
+          var connection = await pool.getConnection();
+          let query1 = 'select name, villageEnterpriseId, photo, category from villageEnterprise where name like "%' + name + '%";';
+          let KeywordList = await connection.query(query1, name);
+
+          res.status(200).send({
+            "message":"Succeed in selecting keywordList" ,
+            "KeywordList" : KeywordList
+          });
+        }
+    }catch(err){
+      res.status(500).send({
+        "message": "syntax error"
+      });
+    } finally{
+      pool.releaseConnection(connection);
+    }
+  });
+
 module.exports = router;
+

@@ -33,7 +33,7 @@ router.post('/', upload.array('images', 5), async(req, res)=>{
        let query = 'select name, profile from user where userId=?'
        var userInfo = await connection.query(query, userId);
 
-       console.log(1111111);
+       console.log(userInfo);
        //post 테이블에 게시글 데이터 삽입
        let query2='insert into post set ?';
        let record = {
@@ -47,7 +47,7 @@ router.post('/', upload.array('images', 5), async(req, res)=>{
        };
 
        var postId = await connection.query(query2, record);
-       if(!(!req.files)){
+       if(!(!req.files||!req.files.length)){
          console.log("images");
          let query3="insert into image (image, postId) values ?";
          let record3 = [];
@@ -57,7 +57,7 @@ router.post('/', upload.array('images', 5), async(req, res)=>{
           }
          }
 
-         console.log(record3);
+         console.log("record3",record3);
          await connection.query(query3, [record3]);
        }
 
@@ -65,7 +65,7 @@ router.post('/', upload.array('images', 5), async(req, res)=>{
      }
 
   } catch(err){
-    console.log(err);
+   console.log(err);
     res.status(500).send({
       "message": "syntax error"
     });
@@ -164,7 +164,7 @@ router.post('/comment', async(req, res)=>{
     } else{
       var connection = await pool.getConnection();
       var userId = req.body.userId;
-      let query1 = 'select name, deviceToken from user where userId=?';
+      let query1 = 'select name from user where userId=?';
       var name = await connection.query(query1, userId);
 
       let query2 = 'insert into comment set ?';
@@ -176,6 +176,7 @@ router.post('/comment', async(req, res)=>{
         "name" : name[0].name
       };
       await connection.query(query2, record2);
+
 
       let query3 = 'select deviceToken from user u, post p where u.userId = p.userId and p.postId=?';
       let deviceToken = await connection.query(query3, req.body.postId);
@@ -198,7 +199,8 @@ router.post('/comment', async(req, res)=>{
               console.log("Something has gone wrong!");
               console.error(err);
           });
-      res.status(200).send({"message": "Succeed in inserting comment."});
+ 
+     res.status(200).send({"message": "Succeed in inserting comment."});
     }
   } catch(err){
     console.log(err);

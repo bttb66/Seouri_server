@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const aws = require('aws-sdk');
 const pool = require('../config/db_pool');
-aws.config.loadFromPath('./config/aws_config.json');
+//aws.config.loadFromPath('./config/aws_config.json');
 const multer = require('multer');
 const multerS3 = require('multer-s3');
 const s3 = new aws.S3();
@@ -24,11 +24,11 @@ router.post('/', async function (req, res) {
       } else{
           var connection = await pool.getConnection();
          //포스터
-         let poster = 'select image from image where imageId=6;';
+         let poster = 'select image from image where posterId=1;';
          let poster1= await connection.query(poster);
          //이주의 마을기업
-          let query = 'select vill.villageEnterpriseId,name,image from villageEnterprise vill,image where image.villageEnterpriseId=1 and vill.villageEnterpriseId=1;';
-          let query2 = 'select vill.villageEnterpriseId,name,image from villageEnterprise vill,image where image.villageEnterpriseId=2 and vill.villageEnterpriseId=2;';
+          let query = 'select villageEnterpriseId,name,photo from villageEnterprise where villageEnterpriseId=1;';
+          let query2 = 'select villageEnterpriseId,name,photo from villageEnterprise where villageEnterpriseId=2;';
           let villageweek1= await connection.query(query);
           let villageweek2= await connection.query(query2);
           let viilageweek=[
@@ -58,7 +58,7 @@ router.post('/', async function (req, res) {
         //lat : 위도, lng : 경도
         res.status(200).send({
           "message" : "Succeed in home",
-          "poster" : poster1[0],
+          "poster" : poster1,
           "weekvillageEnterprise" : viilageweek,
           "villageinformation" : villageinformation,
           "jobinformation" : jobinformation,
